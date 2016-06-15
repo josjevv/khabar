@@ -6,6 +6,8 @@ import (
 	"github.com/bulletind/khabar/utils"
 )
 
+const SORT_FIELD = "sortindex"
+
 type TopicDetail struct {
 	Locked  bool `json:"locked"`
 	Value   bool `json:"value"`
@@ -23,7 +25,7 @@ func GetAllTopics() []string {
 
 	db.Conn.GetCursor(
 		session, db.AvailableTopicCollection, utils.M{},
-	).Distinct("ident", &topics)
+	).Sort(SORT_FIELD).Distinct("ident", &topics)
 
 	return topics
 }
@@ -38,7 +40,7 @@ func GetAppTopics(app_name, org string) (*[]db.AvailableTopic, error) {
 
 	iter := db.Conn.GetCursor(
 		session, db.AvailableTopicCollection, query,
-	).Select(utils.M{"ident": 1, "channels": 1}).Sort("ident").Iter()
+	).Select(utils.M{"ident": 1, "channels": 1}).Sort(SORT_FIELD).Iter()
 
 	err := iter.All(&topics)
 	// TODO: handle this error
@@ -75,6 +77,7 @@ func GetOrgPreferences(org string, appTopics *[]db.AvailableTopic, channels *[]s
 		"ident": utils.M{"$in": availableTopics},
 		"user":  db.BLANK,
 		"org":   db.BLANK,
+		"sort":  SORT_FIELD,
 	}
 
 	// Step 1
@@ -144,6 +147,7 @@ func GetUserPreferences(user, org string, appTopics *[]db.AvailableTopic, channe
 
 	query := utils.M{
 		"ident": utils.M{"$in": availableTopics},
+		"sort":  SORT_FIELD,
 	}
 
 	// Step 1
